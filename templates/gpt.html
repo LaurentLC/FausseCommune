@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Geo Info App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 48%;
+        }
+
+        #info {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 20px;
+            width: 48%;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+<body>
+<h1>Geo Info App</h1>
+<div id="map"></div>
+<div id="info"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+<script>
+    var map = L.map('map', {
+        minZoom: 6,
+        maxBounds: [
+            //south west
+            [40, -6],
+            //north east
+            [52, 10]
+        ],
+    }).setView([46.86584459507945, 2.4942937666232954], 6);
+
+    var marker;
+
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 18
+    }).addTo(map);
+
+    function onMapClick(e) {
+        var lat = e.latlng.lat.toFixed(6);
+        var long = e.latlng.lng.toFixed(6);
+
+
+        if (marker) {
+            map.removeLayer(marker); // Remove previous marker
+        }
+        marker = L.marker([lat, long]).addTo(map); // Add new marker
+
+        document.getElementById('info').innerHTML = 'Chargement...';
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                document.getElementById('info').innerHTML = xhr.responseText;
+            }
+        };
+
+        xhr.open('POST', '/get_geo_info', true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.send('lat=' + lat + '&long=' + long);
+    }
+
+    map.on('click', onMapClick);
+</script>
+</body>
+</html>

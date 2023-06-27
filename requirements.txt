@@ -1,0 +1,8 @@
+flask==2.3.2
+folium==0.14.0
+pandas
+numpy
+unidecode
+geopy
+shapely
+geopandas
