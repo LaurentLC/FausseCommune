@@ -1,3 +1,5 @@
+import time
+
 from flask import Flask, render_template, request
 
 from create_name import MarkovModel
@@ -18,6 +20,11 @@ def get_geo_info():
     return {"responseLat": lat,
             "responseLong": long,
             "names": ["azertyu", "qsdfghjk", "wxcvbn"]}
+
+@app.route('/load_data')
+def load_data():
+    time.sleep(5)
+    return "loaded"
 
 if __name__ == '__main__':
     app.run(debug=True)
