@@ -2,8 +2,6 @@ import time
 
 from flask import Flask, render_template, request
 
-from create_name import MarkovModel
-
 app = Flask(__name__)
 
 @app.route('/')
