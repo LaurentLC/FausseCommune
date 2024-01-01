@@ -6,3 +6,4 @@ unidecode
 geopy
 shapely
 geopandas
+google-cloud-storage
