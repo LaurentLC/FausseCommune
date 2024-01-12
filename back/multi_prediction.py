@@ -3,7 +3,7 @@ import os
 from typing import Optional
 
 from back.external import load_france_shape
-from back.markov_model import MarkovModel, LENGTH_MIN, LENGTH_MAX, DISTANCE_POWER
+from back.markov_model import MarkovModel, LENGTH_MIN, LENGTH_MAX, DISTANCE_POWER, MixedModels
 from back.math_utils import generate_grid_coords
 
 
@@ -22,12 +22,12 @@ def load_models_from_filesystem(sub_dir_path: str) -> Optional[list["MarkovModel
     return None
 
 
-def create_and_train_all_models(size_grid: int,
-                                order: int = 3,
-                                length_min: int = LENGTH_MIN,
-                                length_max: int = LENGTH_MAX,
-                                distance_power: float = DISTANCE_POWER,
-                                models_dir_path: str = "models") -> list["MarkovModel"]:
+def find_or_create_all_models(size_grid: int,
+                              order: int = 3,
+                              length_min: int = LENGTH_MIN,
+                              length_max: int = LENGTH_MAX,
+                              distance_power: float = DISTANCE_POWER,
+                              models_dir_path: str = "models") -> list["MarkovModel"]:
     """
     Find coords meshing France, then compute model for each pair of coords.
     """
@@ -86,10 +86,10 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     start = time.time()
 
-    models = create_and_train_all_models(30)
+    models = find_or_create_all_models(30)
     models_trained = time.time()
 
-    end_model = MarkovModel.find_and_mix_models_for_coords(models, COORDS_BUISSON)
+    end_model = MixedModels(models, COORDS_PARIS)
     models_mixed = time.time()
 
     names = end_model.generate_names(50)

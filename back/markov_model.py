@@ -3,12 +3,12 @@ import logging
 import os.path
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from unidecode import unidecode
 
 from back.external import fetch_communes_data
-from math_utils import coords_dist
+from back.math_utils import coords_dist
 
 LENGTH_MIN = 4
 LENGTH_MAX = 40
@@ -52,6 +52,14 @@ class MarkovModel:
         self._all_init_coeffs: list[float] = []
         self._all_tokens: list[str] = []
         self._model_matrix: dict[str, list[float]] = {}
+
+    @property
+    def communes_data(self) -> pd.DataFrame:
+        if self._data is None:
+            self._data = fetch_communes_data()
+            self._data["nom_commune_clean"] = self._data["nom_commune_complet"].apply(
+                lambda s: MarkovModel._clean_input_name(s))
+        return self._data
 
     def train(self) -> None:
         """
@@ -178,45 +186,6 @@ class MarkovModel:
 
         return model
 
-    @property
-    def communes_data(self) -> pd.DataFrame:
-        if self._data is None:
-            self._data = fetch_communes_data()
-            self._data["nom_commune_clean"] = self._data["nom_commune_complet"].apply(
-                lambda s: MarkovModel._clean_input_name(s))
-        return self._data
-
-    @classmethod
-    def find_and_mix_models_for_coords(cls,
-                                       models: list["MarkovModel"],
-                                       coords: tuple[float, float],
-                                       nb_considered: int = 4) -> "MarkovModel":
-        """
-        Mix models, pre-trained from distinct coords, to create an already trained model.
-        Ponderate each model depending on its distance to desired coords
-        """
-        dists = [coords_dist(model.coords, coords) for model in models]
-        close_models = sorted(models, key=lambda m: dists[models.index(m)])[:nb_considered]
-        dists = sorted(dists)[:nb_considered]
-        m = close_models[0]
-
-        mix = MarkovModel(coords, m.order, m.length_min, m.length_max, m.distance_power)
-        mix._data = m._data
-        mix._all_init_nuples = m._all_init_nuples
-        mix._all_tokens = m._all_tokens
-        mix._all_init_coeffs = np.array([sum(model._all_init_coeffs[i] / (dists[m] ** mix.distance_power)
-                                             for m, model in enumerate(close_models))
-                                         for i in range(len(m._all_init_coeffs))])
-        mix._all_init_coeffs /= mix._all_init_coeffs.sum()
-        mix._model_matrix = {key: np.array([sum(model._model_matrix[key][i] / (dists[m] ** mix.distance_power)
-                                                for m, model in enumerate(close_models))
-                                            for i in range(len(m._model_matrix[key]))])
-                             for key in m._model_matrix.keys()}
-        mix._model_matrix = {key: value / value.sum()
-                             for key, value in mix._model_matrix.items()}
-        mix.trained = True
-        return mix
-
     def _is_generated_name_valid(self, name: str) -> bool:
         """
         Perform several checks on a generated name.
@@ -289,3 +258,37 @@ class MarkovModel:
         name = '-'.join(words)
 
         return name
+
+
+class MixedModels(MarkovModel):
+
+    def __init__(self,
+                 models: list["MarkovModel"],
+                 coords: tuple[float, float],
+                 nb_considered: int = 4):
+        """
+        Mix models, pre-trained from distinct coords, to create an already trained model.
+        Ponderate each model depending on its distance to desired coords
+        """
+        super().__init__(coords, models[0].order, models[0].length_min, models[0].length_max, models[0].distance_power)
+
+        # note: this could be optimized
+        dists = [coords_dist(model.coords, coords) for model in models]
+        close_models = sorted(models, key=lambda m: dists[models.index(m)])[:nb_considered]
+        dists = sorted(dists)[:nb_considered]
+        m = close_models[0]
+
+        self._data = m._data
+        self._all_init_nuples = m._all_init_nuples
+        self._all_tokens = m._all_tokens
+        self._all_init_coeffs = np.array([sum(model._all_init_coeffs[i] / (dists[m] ** self.distance_power)
+                                              for m, model in enumerate(close_models))
+                                          for i in range(len(m._all_init_coeffs))])
+        self._all_init_coeffs /= self._all_init_coeffs.sum()
+        self._model_matrix = {key: np.array([sum(model._model_matrix[key][i] / (dists[m] ** self.distance_power)
+                                                 for m, model in enumerate(close_models))
+                                             for i in range(len(m._model_matrix[key]))])
+                              for key in m._model_matrix.keys()}
+        self._model_matrix = {key: value / value.sum()
+                              for key, value in self._model_matrix.items()}
+        self.trained = True
