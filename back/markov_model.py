@@ -17,10 +17,11 @@ DISTANCE_POWER = 1.8
 
 class MarkovModel:
     END_TOKEN = '\n'
+    _communes_data = None
 
     def __init__(self,
-                 coords: tuple[float, float],
-                 order: int,
+                 center_coords: tuple[float, float],
+                 markov_order: int,
                  length_min: int = LENGTH_MIN,
                  length_max: int = LENGTH_MAX,
                  distance_power: float = DISTANCE_POWER):
@@ -37,14 +38,11 @@ class MarkovModel:
         """
 
         # model params
-        self.coords = coords
-        self.order = order
+        self.center_coords = center_coords
+        self.markov_order = markov_order
         self.length_min = length_min
         self.length_max = length_max
         self.distance_power = distance_power
-
-        # data
-        self._data = None
 
         # trained model
         self.trained = False
@@ -53,13 +51,13 @@ class MarkovModel:
         self._all_tokens: list[str] = []
         self._model_matrix: dict[str, list[float]] = {}
 
-    @property
-    def communes_data(self) -> pd.DataFrame:
-        if self._data is None:
-            self._data = fetch_communes_data()
-            self._data["nom_commune_clean"] = self._data["nom_commune_complet"].apply(
+    @classmethod
+    def communes_data(cls) -> pd.DataFrame:
+        if cls._communes_data is None:
+            cls._communes_data = fetch_communes_data()
+            cls._communes_data["nom_commune_clean"] = cls._communes_data["nom_commune_complet"].apply(
                 lambda s: MarkovModel._clean_input_name(s))
-        return self._data
+        return cls._communes_data
 
     def train(self) -> None:
         """
@@ -69,19 +67,19 @@ class MarkovModel:
         # build raw matrices (raw = they contain all transitions with their distance)
         model_raw_matrix = {}
         model_raw_init = {}
-        for i, row in self.communes_data.iterrows():
+        for i, row in self.communes_data().iterrows():
             # get commune infos
             name, lat, long = row['nom_commune_clean'], row['latitude'], row['longitude']
-            distance = coords_dist(self.coords, (lat, long))
+            distance = coords_dist(self.center_coords, (lat, long))
 
             # add each nuple -> char transition in commune name with distance
-            first_nuple = name[0:self.order]
+            first_nuple = name[0:self.markov_order]
             model_raw_init.setdefault(first_nuple, []).append(distance)
-            for j in range(len(name) - self.order):
-                nuple = name[j:j + self.order]
-                next_token = name[j + self.order]
+            for j in range(len(name) - self.markov_order):
+                nuple = name[j:j + self.markov_order]
+                next_token = name[j + self.markov_order]
                 model_raw_matrix.setdefault(nuple, {}).setdefault(next_token, []).append(distance)
-            last_nuple = name[-self.order:]
+            last_nuple = name[-self.markov_order:]
             model_raw_matrix.setdefault(last_nuple, {}).setdefault(self.END_TOKEN, []).append(distance)
 
         # build final matrices (ponderated averages, depending on distances)
@@ -118,7 +116,7 @@ class MarkovModel:
             logging.info("Generating name")
             name = np.random.choice(self._all_init_nuples, p=self._all_init_coeffs)
             while name[-1] != self.END_TOKEN:
-                token = np.random.choice(self._all_tokens, p=self._model_matrix[name[-self.order:]])
+                token = np.random.choice(self._all_tokens, p=self._model_matrix[name[-self.markov_order:]])
                 name = name + token
             name = name[:-1]
 
@@ -135,8 +133,8 @@ class MarkovModel:
         matrix_values = np.array(list(self._model_matrix.values()))
         init_coeffs = np.array(self._all_init_coeffs)
         other_data = {
-            "coords": self.coords,
-            "order": self.order,
+            "coords": self.center_coords,
+            "order": self.markov_order,
             "length_min": self.length_min,
             "length_max": self.length_max,
             "distance_power": self.distance_power,
@@ -198,7 +196,7 @@ class MarkovModel:
             return False
 
         # check not existing
-        if name in self.communes_data["nom_commune_clean"].values:
+        if name in self.communes_data()["nom_commune_clean"].values:
             return False
 
         words = name.split()
@@ -270,15 +268,14 @@ class MixedModels(MarkovModel):
         Mix models, pre-trained from distinct coords, to create an already trained model.
         Ponderate each model depending on its distance to desired coords
         """
-        super().__init__(coords, models[0].order, models[0].length_min, models[0].length_max, models[0].distance_power)
+        super().__init__(coords, models[0].markov_order, models[0].length_min, models[0].length_max, models[0].distance_power)
 
         # note: this could be optimized
-        dists = [coords_dist(model.coords, coords) for model in models]
+        dists = [coords_dist(model.center_coords, coords) for model in models]
         close_models = sorted(models, key=lambda m: dists[models.index(m)])[:nb_considered]
         dists = sorted(dists)[:nb_considered]
         m = close_models[0]
 
-        self._data = m._data
         self._all_init_nuples = m._all_init_nuples
         self._all_tokens = m._all_tokens
         self._all_init_coeffs = np.array([sum(model._all_init_coeffs[i] / (dists[m] ** self.distance_power)
