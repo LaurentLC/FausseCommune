@@ -1,8 +1,6 @@
-import time
-
 from flask import Flask, render_template, request
 
-from back.markov_model import MarkovModel
+from back.markov.markov_model import MarkovModel
 
 app = Flask(__name__)
 

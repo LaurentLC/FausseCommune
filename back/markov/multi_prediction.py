@@ -2,9 +2,9 @@ import logging
 import os
 from typing import Optional
 
-from back.external import load_france_shape
-from back.markov_model import MarkovModel, LENGTH_MIN, LENGTH_MAX, DISTANCE_POWER, MixedModels
-from back.math_utils import generate_grid_coords
+from back.data_interfaces.external import load_france_shape
+from back.markov.markov_model import MarkovModel, LENGTH_MIN, LENGTH_MAX, DISTANCE_POWER, MixedModels
+from back.markov.math_utils import generate_grid_coords
 
 
 def load_models_from_filesystem(sub_dir_path: str) -> Optional[list["MarkovModel"]]:

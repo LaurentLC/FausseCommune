@@ -55,6 +55,13 @@ class StorageClient:
         os.remove(zip_filepath)
 
     @classmethod
+    def download_string_file(cls, gs_path: str) -> str:
+        """Downloads a blob into memory."""
+        bucket = cls.get_default_bucket()
+        blob = bucket.blob(gs_path)
+        return blob.download_as_text()
+
+    @classmethod
     def clean_path(cls, path: str):
         """
         Return any gs path cleaned from prefixes.

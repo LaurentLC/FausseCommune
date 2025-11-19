@@ -7,8 +7,8 @@ import numpy as np
 import pandas as pd
 from unidecode import unidecode
 
-from back.external import fetch_communes_data
-from back.math_utils import coords_dist
+from back.data_interfaces.external import fetch_communes_data
+from back.markov.math_utils import coords_dist
 
 LENGTH_MIN = 4
 LENGTH_MAX = 40
