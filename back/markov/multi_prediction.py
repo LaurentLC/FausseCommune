@@ -86,7 +86,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     start = time.time()
 
-    models = find_or_create_all_models(30)
+    models = find_or_create_all_models(10, 3, 4, 40, 1.8, "models")
     models_trained = time.time()
 
     end_model = MixedModels(models, COORDS_PARIS)

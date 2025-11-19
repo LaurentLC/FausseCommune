@@ -244,3 +244,4 @@ http-client.private.env.json
 # Added by hand
 .idea/flaskProject.iml
 .idea/misc.xml
+models
