@@ -30,7 +30,7 @@ class StorageClient:
         If content_type is None, it will be guessed from the file extension.
         """
         bucket = cls.get_default_bucket()
-        blob = bucket.blob(gs_path)
+        blob = bucket.blob(cls.clean_path(gs_path))
         blob.upload_from_filename(local_path, content_type=content_type, timeout=300)
         if make_public:
             blob.make_public()
@@ -49,7 +49,7 @@ class StorageClient:
                 zipf.write(filepath, arcname=os.path.basename(filepath))
 
         # Upload the zip file to storage
-        cls.upload_file(gs_path, zip_filepath, content_type="application/zip", make_public=make_public)
+        cls.upload_file(cls.clean_path(gs_path), zip_filepath, content_type="application/zip", make_public=make_public)
 
         # Clean up the local zip file
         os.remove(zip_filepath)
@@ -58,7 +58,7 @@ class StorageClient:
     def download_string_file(cls, gs_path: str) -> str:
         """Downloads a blob into memory."""
         bucket = cls.get_default_bucket()
-        blob = bucket.blob(gs_path)
+        blob = bucket.blob(cls.clean_path(gs_path))
         return blob.download_as_text()
 
     @classmethod
@@ -70,6 +70,6 @@ class StorageClient:
             path = path[1:]
         elif path.startswith('gs://'):
             path = path[5:]
-        if path.startswith(f"{cls.project_name}.appspot.com/"):
-            path = path[len(f"{cls.project_name}.appspot.com/"):]
+        if path.startswith(f"{cls.default_bucket_name}/"):
+            path = path[len(f"{cls.default_bucket_name}/"):]
         return path

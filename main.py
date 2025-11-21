@@ -6,6 +6,8 @@ import os
 
 from flask import Flask
 
+from back.data_interfaces.storage import StorageClient
+
 app = Flask(__name__)
 
 
@@ -15,7 +17,11 @@ def hello_world():
     name = os.environ.get("NAME", "World")
     return f"Hello {name}!"
 
-# TODO creer une vraie route back pour aller au bout de l'exercice (qui ait besoin du storage pour tester l'auth)
+
+@app.route("/bucket")
+def get_anything_from_bucket():
+    """Just to test if auth works"""
+    return StorageClient.download_string_file("gs://fausses_communes_bucket/fonctionne.txt")
 
 
 if __name__ == "__main__":
