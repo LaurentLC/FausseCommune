@@ -68,15 +68,24 @@ class StorageClient:
         return blob.download_as_text()
 
     @classmethod
-    def download_and_unzip(cls, gs_path: str, output_dir: str) -> tuple[float, float]:
-        """Downloads a blob into memory."""
+    def download_and_unzip(cls, gs_path: str, output_dir: str) -> str | None:
+        """
+        Downloads and extract files. Return extracted dir path
+        (Note: we could go faster by keeping files in memory instead of writing to disk.)
+        """
         bucket = cls.get_default_bucket()
         blob = bucket.blob(cls.clean_path(gs_path))
-        blob.download_to_filename(os.path.join(output_dir, os.path.basename(gs_path)))
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir, exist_ok=True)
-        with zipfile.ZipFile(os.path.join(output_dir, os.path.basename(gs_path)), 'r') as zip_ref:
+        if not blob.exists():
+            return None
+        downloaded_file_path = os.path.join(os.path.basename(gs_path)) + ".zip"
+        blob.download_to_filename(downloaded_file_path)
+
+        os.makedirs(output_dir, exist_ok=True)
+        with zipfile.ZipFile(downloaded_file_path, 'r') as zip_ref:
             zip_ref.extractall(output_dir)
+
+        os.remove(downloaded_file_path)
+        return output_dir
 
     @classmethod
     def clean_path(cls, path: str):

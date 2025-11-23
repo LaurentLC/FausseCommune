@@ -28,11 +28,6 @@ def generate_name():
     return generate_name(lat, long)
 
 
-@app.route("/zip")
-def zip():
-    dl_time, extract_time = StorageClient.download_and_unzip("zip.zip", "poub")
-    return f"zip downloaded in {round(dl_time * 1000)}ms and extracted in {round(extract_time * 1000)}ms"
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))

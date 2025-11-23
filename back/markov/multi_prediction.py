@@ -7,6 +7,7 @@ from back.data_interfaces.storage import StorageClient
 from back.markov.markov_model import MarkovModel, LENGTH_MIN, LENGTH_MAX, DISTANCE_POWER, MixedModels
 from back.markov.math_utils import generate_grid_coords
 
+
 def generate_name(lat, long):
     return f"{lat}_{long}"
 
@@ -30,8 +31,10 @@ def load_models_from_gcp(expected_name: str) -> Optional[list["MarkovModel"]]:
     """
     Return None if not found.
     """
-    StorageClient.download_and_unzip(expected_name, expected_name)
-    return load_models_from_filesystem(expected_name)
+    model_dir = StorageClient.download_and_unzip(expected_name, expected_name)
+    if model_dir is not None:
+        return load_models_from_filesystem(os.path.join(model_dir, expected_name))
+    return None
 
 
 def find_or_create_all_models(size_grid: int,
@@ -43,10 +46,14 @@ def find_or_create_all_models(size_grid: int,
     """
     Find coords meshing France, then compute model for each pair of coords.
     """
-    # try to load models
+    # try to load models from filesystem
     sub_dir_name = f"models_{size_grid}_{order}_{length_min}_{length_max}_{distance_power}"
     sub_dir_path = os.path.join(models_dir_path, sub_dir_name)
     models = load_models_from_filesystem(sub_dir_path)
+
+    # try to load models from gcp
+    if models is None:
+        models = load_models_from_gcp(sub_dir_name)
 
     if models is None:
         # find centers
@@ -100,7 +107,11 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     start = time.time()
 
-    models = find_or_create_all_models(10, 3, 4, 40, 1.8, "models")
+    for grid_size in [3, 5, 10, 20, 30, 40, 50]:
+        print(f"Generating models with grid size {grid_size}...")
+        grid_start = time.time()
+        models = find_or_create_all_models(grid_size, 3, 4, 40, 1.8, "models")
+        print(f"Grid size {grid_size} done in {time.time() - grid_start:.2f}")
     models_trained = time.time()
 
     end_model = MixedModels(models, COORDS_PARIS)
