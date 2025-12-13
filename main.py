@@ -19,7 +19,7 @@ def hello_world():
 @app.route("/api/get_available_models", methods=['GET'])
 def get_available_models():
     from back.data_interfaces.storage import StorageClient
-    return StorageClient.download_json_file_as_dict(StorageClient.models_json_path)
+    return StorageClient.get_available_models()
 
 
 @app.route("/api/generate_name", methods=['POST'])
@@ -34,6 +34,16 @@ def generate_name():
     return model.generate_names(
         number_names
     )
+
+
+@app.route("/api/get_round", methods=['POST'])
+def get_round():
+    from back.game import play_round
+    data = request.get_json()
+    game_seed = data.get('game_seed', None)
+    round_ix = data.get('round_ix', None)
+    good_coords, fake_names, bad_coords = play_round(round_ix, game_seed)
+    return {"good_coords": good_coords, "fake_names": fake_names, "bad_coords": bad_coords}
 
 
 if __name__ == "__main__":

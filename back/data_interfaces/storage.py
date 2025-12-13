@@ -13,6 +13,7 @@ class StorageClient:
 
     _client = None
     _default_bucket = None
+    _available_models = None
 
     @classmethod
     def get_client(cls) -> storage.Client:
@@ -96,11 +97,14 @@ class StorageClient:
         blob.download_to_filename(downloaded_file_path)
 
         os.makedirs(output_dir, exist_ok=True)
+        files_before = os.listdir(output_dir)
         with zipfile.ZipFile(downloaded_file_path, 'r') as zip_ref:
             zip_ref.extractall(output_dir)
 
         os.remove(downloaded_file_path)
-        return output_dir
+        files_after = os.listdir(output_dir)
+        new_folder = next(f for f in files_after if f not in files_before)
+        return os.path.join(output_dir, new_folder)
 
     @classmethod
     def clean_path(cls, path: str):
@@ -114,3 +118,14 @@ class StorageClient:
         if path.startswith(f"{cls.default_bucket_name}/"):
             path = path[len(f"{cls.default_bucket_name}/"):]
         return path
+
+    @classmethod
+    def get_available_models(cls) -> dict:
+        if cls._available_models is None:
+            cls._available_models = cls.download_json_file_as_dict(cls.models_json_path) or {}
+        return cls._available_models
+
+    @classmethod
+    def set_available_models(cls, all_models_dict: dict):
+        cls._available_models = all_models_dict
+        cls.upload_dict_to_json_file(cls.models_json_path, all_models_dict)

@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from unidecode import unidecode
 
-from back.data_interfaces.public import fetch_communes_data
+from back.data_interfaces.public import PublicData
 from back.data_interfaces.storage import StorageClient
 from back.markov.math_utils import coords_dist
 
@@ -60,7 +60,7 @@ class MarkovModel:
     @classmethod
     def communes_data(cls) -> pd.DataFrame:
         if cls._communes_data is None:
-            cls._communes_data = fetch_communes_data()
+            cls._communes_data = PublicData.fetch_communes_data()
             cls._communes_data["nom_commune_clean"] = cls._communes_data["nom_commune_complet"].apply(
                 lambda s: MarkovModel._clean_input_name(s))
         return cls._communes_data
@@ -183,9 +183,7 @@ class MarkovModel:
         If it has already been saved on GCP storage, Nothing will happen
         """
         # get the models json if it exists
-        all_models_dict = StorageClient.download_json_file_as_dict(StorageClient.models_json_path)
-        if all_models_dict is None:
-            all_models_dict = {}
+        all_models_dict = StorageClient.get_available_models()
         for model_key, model_parameters in all_models_dict.items():
             if model_parameters == self.get_light_parameters():
                 # model was already saved
@@ -204,26 +202,20 @@ class MarkovModel:
 
         # add the just uploaded model to the models_json
         all_models_dict[model_key] = self.get_light_parameters()
-        StorageClient.upload_dict_to_json_file(StorageClient.models_json_path, all_models_dict)
+        StorageClient.set_available_models(all_models_dict)
 
     @classmethod
     def load_from_local_filesystem(self, dir_path) -> "MarkovModel":
         numpy_file_path = os.path.join(dir_path, "coeffs.npy")
-        data_file_path_legacy_name = os.path.join(dir_path, "data.json")
         data_file_path = os.path.join(dir_path, "parameters.json")
-        if not (os.path.isfile(numpy_file_path) and (os.path.isfile(data_file_path)
-                                                     or os.path.isfile(data_file_path_legacy_name))):
+        if not (os.path.isfile(numpy_file_path) and os.path.isfile(data_file_path)):
             raise ValueError("Unable to find saved data.")
 
         with open(numpy_file_path, "rb") as f:
             matrix_values = np.load(f)
             init_coeffs = np.load(f)
-        if os.path.isfile(data_file_path_legacy_name):
-            with open(data_file_path_legacy_name) as f:
-                data = json.load(f)
-        else:
-            with open(data_file_path) as f:
-                data = json.load(f)
+        with open(data_file_path) as f:
+            data = json.load(f)
         coords = data["coords"]
         order = data["order"]
         length_min = data["length_min"]
@@ -243,8 +235,9 @@ class MarkovModel:
 
         return model
 
-    def load_from_gcp_storage(self, model_key: str) -> "MarkovModel":
-        model_dir = StorageClient.download_and_unzip(f"models/{model_key}", f"model_{model_key}")
+    @classmethod
+    def load_from_gcp_storage(cls, model_key: str) -> "MarkovModel":
+        model_dir = StorageClient.download_and_unzip(f"models/{model_key}", "./")
         if model_dir is not None:
             return MarkovModel.load_from_local_filesystem(model_dir)
         else:
