@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os.path
+import random
 import shutil
 import uuid
 from pathlib import Path
@@ -127,14 +128,16 @@ class MarkovModel:
         if not self.trained:
             self.train()
 
-        np.random.seed(seed)
+        random.seed(seed)
         names = []
         while len(names) < number_names:
             # generate name
             logging.info("Generating name")
-            name = np.random.choice(self._all_init_nuples, p=self._all_init_coeffs)
+            name = random.choices(self._all_init_nuples,
+                                  weights=self._all_init_coeffs, k=1)[0]
             while name[-1] != self.END_TOKEN:
-                token = np.random.choice(self._all_tokens, p=self._model_matrix[name[-self.markov_order:]])
+                token = random.choices(self._all_tokens,
+                                          weights=self._model_matrix[name[-self.markov_order:]], k=1)[0]
                 name = name + token
             name = name[:-1]
 
@@ -145,7 +148,7 @@ class MarkovModel:
                     logging.info("Name is valid and new")
                     names.append(nice)
 
-        np.random.seed(None)
+        random.seed(None)
         return names
 
     def get_parameters(self) -> dict:
