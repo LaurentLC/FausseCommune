@@ -53,4 +53,4 @@ def play_round(round_ix: int,
     km_min = max(75, 500 - round_ix * 25)
     alternative_coords = get_alternative_coords(model.center_coords, nb_alternatives, km_min,
                                                 PublicData.get_france_shape(), f"{game_seed}_{round_ix}")
-    return model.center_coords, model.generate_names(nb_names), alternative_coords
+    return model.center_coords, model.generate_names(nb_names, game_seed), alternative_coords

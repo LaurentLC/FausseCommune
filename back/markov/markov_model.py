@@ -120,13 +120,14 @@ class MarkovModel:
         self._model_matrix = model_matrix
         self.trained = True
 
-    def generate_names(self, number_names: int = 5) -> list[str]:
+    def generate_names(self, number_names: int = 5, seed: str | None = None) -> list[str]:
         """
         Main function to generate names. Train the model if it is not already.
         """
         if not self.trained:
             self.train()
 
+        np.random.seed(seed)
         names = []
         while len(names) < number_names:
             # generate name
@@ -144,6 +145,7 @@ class MarkovModel:
                     logging.info("Name is valid and new")
                     names.append(nice)
 
+        np.random.seed(None)
         return names
 
     def get_parameters(self) -> dict:
