@@ -236,7 +236,7 @@
 
     <script>
         let map;
-        let currentRound = 1;
+        let currentRound = 0;
         let gameSeed;
         let markers = [];
 
@@ -377,15 +377,15 @@
         function restartGame() {
             document.getElementById('game-over-modal').classList.remove('show');
             gameSeed = generateSeed();
-            currentRound = 1;
-            loadRound(1);
+            currentRound = 0;
+            loadRound(0);
         }
 
         // Initialiser le jeu au chargement de la page
         window.onload = () => {
             initMap();
             gameSeed = generateSeed();
-            loadRound(1);
+            loadRound(0);
         };
 
         // Redimensionner la carte quand la fenêtre change de taille
