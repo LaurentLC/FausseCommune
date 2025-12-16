@@ -68,7 +68,12 @@ class MarkovModel:
     @classmethod
     def from_model_key(cls, model_key: str) -> "MarkovModel":
         if model_key not in cls.models_by_key:
-            cls.models_by_key[model_key] = cls.load_from_gcp_storage(model_key)
+            try:
+                # let's try to find it in local filesystem first
+                cls.models_by_key[model_key] = cls.load_from_local_filesystem(f"models/model_{model_key}")
+            except ValueError:
+                # else, download it from GCP storage
+                cls.models_by_key[model_key] = cls.load_from_gcp_storage(model_key)
         return cls.models_by_key[model_key]
 
     def train(self) -> None:
@@ -237,7 +242,7 @@ class MarkovModel:
 
     @classmethod
     def load_from_gcp_storage(cls, model_key: str) -> "MarkovModel":
-        model_dir = StorageClient.download_and_unzip(f"models/{model_key}", "./")
+        model_dir = StorageClient.download_and_unzip(f"models/{model_key}", "./models/")
         if model_dir is not None:
             return MarkovModel.load_from_local_filesystem(model_dir)
         else:
