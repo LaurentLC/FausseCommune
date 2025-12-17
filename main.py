@@ -15,24 +15,11 @@ def index():
     """Route pour servir la page principale du jeu"""
     return render_template('index.html')
 
-@app.route("/api/get_available_models", methods=['GET'])
-def get_available_models():
-    from back.data_interfaces.storage import StorageClient
-    return StorageClient.get_available_models()
 
-
-@app.route("/api/generate_name", methods=['POST'])
-def generate_name():
-    from back.markov.markov_model import MarkovModel
-    # read payload
-    data = request.get_json()
-    model_key = data.get('model_key', None)
-    number_names = data.get('number_names', 1)
-
-    model = MarkovModel.from_model_key(model_key)
-    return model.generate_names(
-        number_names
-    )
+@app.route('/robots.txt')
+def robots():
+    """Route pour servir le fichier robots.txt"""
+    return "User-agent: *\nAllow: /", 200, {'Content-Type': 'text/plain; charset=utf-8'}
 
 
 @app.route("/api/get_round", methods=['POST'])
