@@ -137,7 +137,7 @@ class MarkovModel:
                                   weights=self._all_init_coeffs, k=1)[0]
             while name[-1] != self.END_TOKEN:
                 token = random.choices(self._all_tokens,
-                                          weights=self._model_matrix[name[-self.markov_order:]], k=1)[0]
+                                       weights=self._model_matrix[name[-self.markov_order:]], k=1)[0]
                 name = name + token
             name = name[:-1]
 
@@ -246,6 +246,22 @@ class MarkovModel:
         return model
 
     @classmethod
+    def generate_names_in_advance(cls, nb_names_per_model: int, nb_models: int | None = None) -> dict:
+        output_data = {}
+        model_keys = list(StorageClient.get_available_models().keys())
+        if nb_models is not None:
+            random.seed(42)
+            random.shuffle(model_keys)
+            random.seed(None)
+            model_keys = model_keys[:nb_models]
+        for model_ix, model_key in enumerate(model_keys):
+            print(f"Generating names for model {model_ix + 1}/{len(model_keys)}")
+            model = cls.from_model_key(model_key)
+            names = model.generate_names(number_names=nb_names_per_model)
+            output_data[model_key] = {"coords": model.center_coords, "names": names}
+        return output_data
+
+    @classmethod
     def load_from_gcp_storage(cls, model_key: str) -> "MarkovModel":
         model_dir = StorageClient.download_and_unzip(f"models/{model_key}", "./models/")
         if model_dir is not None:
@@ -326,3 +342,9 @@ class MarkovModel:
         name = '-'.join(words)
 
         return name
+
+
+if __name__ == '__main__':
+    generated_names = MarkovModel.generate_names_in_advance(30, None)
+    with open(r"C:\Users\xavie\PycharmProjects\OldFaussesCommunes\back\data_interfaces\all_models.json", "w") as f:
+        json.dump(generated_names, f, ensure_ascii=False)

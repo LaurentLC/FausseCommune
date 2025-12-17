@@ -10,10 +10,12 @@ class StorageClient:
     project_name = "fausse-commune"
     default_bucket_name = "fausses_communes_bucket"
     models_json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "all_models.json")
+    generated_names_json_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "generated_names.json")
 
     _client = None
     _default_bucket = None
     _available_models = None
+    _pre_generated_names_by_model = None
 
     @classmethod
     def get_client(cls) -> storage.Client:
@@ -131,3 +133,10 @@ class StorageClient:
         cls._available_models = all_models_dict
         with open(cls.models_json_path, "w") as f:
             json.dump(all_models_dict, f, sort_keys=True, ensure_ascii=False)
+
+    @classmethod
+    def get_pre_generated_names_by_model(cls) -> dict:
+        if cls._pre_generated_names_by_model is None:
+            with open(cls.generated_names_json_path, "r") as f:
+                cls._pre_generated_names_by_model = json.load(f)
+        return cls._pre_generated_names_by_model

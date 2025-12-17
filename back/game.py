@@ -5,7 +5,6 @@ from shapely.geometry.point import Point
 
 from back.data_interfaces.public import PublicData
 from back.data_interfaces.storage import StorageClient
-from back.markov.markov_model import MarkovModel
 from back.markov.math_utils import coords_dist
 
 if TYPE_CHECKING:
@@ -43,14 +42,22 @@ def play_round(round_ix: int,
                game_seed: str,
                nb_names: int = 7) -> tuple[
     tuple[float, float], list[str], list[tuple[float, float]]]:
-    random.seed(game_seed)
-    available_models = StorageClient.get_available_models()
-    model_keys = list(available_models.keys())
-    random.shuffle(model_keys)
-    model_key = model_keys[round_ix]
-    model = MarkovModel.from_model_key(model_key)
-    nb_alternatives = round_ix // 3 + 1
+
+    # pick a random model
+    names_by_model_key = StorageClient.get_pre_generated_names_by_model()
+    model_keys = list(names_by_model_key.keys())
+    random.seed(f"{game_seed}_{round_ix}")
+    model_key = random.choice(model_keys)
+
+    # get names
+    names = names_by_model_key[model_key]["names"]
+    random.shuffle(names)
+    names = names[:nb_names]
+
+    # generate alternative coords
+    center_coords = names_by_model_key[model_key]["coords"]
+    nb_alternatives = min(6, round_ix // 3 + 1)
     km_min = max(75, 500 - round_ix * 25)
-    alternative_coords = get_alternative_coords(model.center_coords, nb_alternatives, km_min,
+    alternative_coords = get_alternative_coords(center_coords, nb_alternatives, km_min,
                                                 PublicData.get_france_shape(), f"{game_seed}_{round_ix}")
-    return model.center_coords, model.generate_names(nb_names, game_seed), alternative_coords
+    return center_coords, names, alternative_coords
