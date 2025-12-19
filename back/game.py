@@ -50,7 +50,7 @@ def play_round(round_ix: int,
     model_key = random.choice(model_keys)
 
     # get names
-    names = names_by_model_key[model_key]["names"]
+    names = sorted(names_by_model_key[model_key]["names"])
     random.shuffle(names)
     names = names[:nb_names]
 
