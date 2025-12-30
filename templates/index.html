@@ -6,7 +6,8 @@
     <title>Fausse Commune</title>
 
     <!-- Favicon (placeholder SVG) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+    <link rel="icon"
+          href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
 
     <!-- Bibliothèques externes -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -155,9 +156,9 @@
 
         .hint-item {
             background: white;
-            padding: 15px;
-            margin-bottom: 12px;
-            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             border-left: 4px solid #457b9d;
             font-size: 16px;
@@ -392,7 +393,6 @@
         <div class="hints-container">
             <!-- Section indices (partie haute) -->
             <div class="hints-section">
-                <div class="hints-header">De quelle région viennent ces communes ?</div>
                 <ul class="hints-list" id="hints-list">
                     <li class="loading">Chargement...</li>
                 </ul>
@@ -435,10 +435,16 @@
         <div class="modal-title help-title">📖 Comment jouer ?</div>
         <div class="modal-text">
             <p><strong>[📜 Règles du jeu]</strong></p>
-            <p>Fausse Commune est un petit jeu gratuit qui va tester votre connaissance géographique et votre sens de la déduction.</p>
-            <p>Il se base sur un algorithme générateur de noms de communes (que j'ai créé). L'algorithme est basé sur les vrais noms des 31 000 communes françaises. Sa particularité : il sait génèrer des noms adaptés à des coordonnées géographiques précises, en observant les noms des communes du coin.</p>
-            <p>Dans le jeu Fausse Commune, je vous montre des noms générés, et vous devez deviner sur quelles coordonnées se basait l'algorithme générateur. Est-ce que les communes sonnent plutôt bretonnes, alsaciennes, méridionales... ?</p>
-            <p>Cliquez sur les points rouges de la carte pour donner votre réponse. Au fur et à mesure des manches, ils vont être plus nombreux et plus resserrés.</p>
+            <p>Fausse Commune est un petit jeu gratuit qui va tester votre connaissance géographique et votre sens de la
+                déduction.</p>
+            <p>Il se base sur un algorithme générateur de noms de communes (que j'ai créé). L'algorithme est basé sur
+                les vrais noms des 31 000 communes françaises. Sa particularité : il sait génèrer des noms adaptés à des
+                coordonnées géographiques précises, en observant les noms des communes du coin.</p>
+            <p>Dans le jeu Fausse Commune, je vous montre des noms générés, et vous devez deviner sur quelles
+                coordonnées se basait l'algorithme générateur. Est-ce que les communes sonnent plutôt bretonnes,
+                alsaciennes, méridionales... ?</p>
+            <p>Cliquez sur les points rouges de la carte pour donner votre réponse. Au fur et à mesure des manches, ils
+                vont être plus nombreux et plus resserrés.</p>
             <p>Votre score final est le nombre de manches remportées d'affilée.</p>
         </div>
         <button class="modal-button" onclick="closeHelp()">Compris !</button>
