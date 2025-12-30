@@ -1,1 +1,1 @@
-gcloud run deploy faussescommunes --source . --allow-unauthenticated --region europe-west1 --project fausse-commune
+gcloud run deploy faussescommunes --source ./to_deploy --allow-unauthenticated --region europe-west1 --project fausse-commune
