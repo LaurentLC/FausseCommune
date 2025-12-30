@@ -454,6 +454,9 @@
     let gameSeed; // Seed de la partie actuelle
     let markers = []; // Tableau des marqueurs sur la carte
     let bestScore = 0; // Meilleur score du joueur
+    let goodMarkerRef = null; // Référence au bon marqueur
+    let gameBlocked = false; // Empêche les interactions pendant la révélation
+
 
     /* ========================================
        GESTION DU MEILLEUR SCORE (LOCALSTORAGE)
@@ -599,6 +602,9 @@
         // Nettoie tous les anciens marqueurs de la carte
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
+        goodMarkerRef = null;
+        gameBlocked = false; // Réinitialise le blocage
+
 
         // Met à jour le score actuel
         currentRound = roundIx;
@@ -628,9 +634,14 @@
             radius: 12
         }).addTo(map);
 
+        // Stocke la référence du bon marqueur
+        goodMarkerRef = goodMarker;
+
         // Ajoute un événement au clic sur le bon marqueur
         goodMarker.on('click', () => {
-            handleCorrectAnswer();
+            if (!gameBlocked) {
+                handleCorrectAnswer();
+            }
         });
 
         markers.push(goodMarker);
@@ -646,8 +657,11 @@
 
             // Ajoute un événement au clic sur le mauvais marqueur
             badMarker.on('click', () => {
-                handleWrongAnswer();
+                if (!gameBlocked) {
+                    handleWrongAnswer();
+                }
             });
+
 
             markers.push(badMarker);
         });
@@ -664,9 +678,37 @@
        ======================================== */
 
     /**
+     * Révèle la bonne réponse et ajuste la vue
+     */
+    function revealAnswer() {
+        gameBlocked = true; // Bloque les interactions
+
+        // Colore le bon marqueur en vert
+        if (goodMarkerRef) {
+            goodMarkerRef.setStyle({
+                color: '#28a745',
+                fillColor: '#28a745',
+                fillOpacity: 0.8
+            });
+        }
+
+        // Zoom pour afficher tous les marqueurs
+        const allCoords = [];
+        markers.forEach(marker => {
+            const latLng = marker.getLatLng();
+            allCoords.push([latLng.lat, latLng.lng]);
+        });
+        const bounds = L.latLngBounds(allCoords);
+        map.fitBounds(bounds, {padding: [50, 50]});
+    }
+
+    /**
      * Appelée quand le joueur clique sur la bonne réponse
      */
     function handleCorrectAnswer() {
+        // Révèle la réponse immédiatement
+        revealAnswer();
+
         // Affiche le message de victoire
         const overlay = document.getElementById('victory-overlay');
         const message = document.getElementById('victory-message');
@@ -694,13 +736,20 @@
      * Appelée quand le joueur clique sur une mauvaise réponse
      */
     function handleWrongAnswer() {
-        // Sauvegarde le meilleur score si nécessaire
-        saveBestScore(currentRound);
+        // Révèle la réponse immédiatement
+        revealAnswer();
 
-        // Affiche la modale de game over
-        document.getElementById('final-round').textContent = currentRound;
-        document.getElementById('game-over-modal').classList.add('show');
+        // Attend 1 seconde avant d'afficher la modale de game over
+        setTimeout(() => {
+            // Sauvegarde le meilleur score si nécessaire
+            saveBestScore(currentRound);
+
+            // Affiche la modale de game over
+            document.getElementById('final-round').textContent = currentRound;
+            document.getElementById('game-over-modal').classList.add('show');
+        }, 1000);
     }
+
 
     /* ========================================
        CONTRÔLES DU JEU
