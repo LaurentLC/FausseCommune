@@ -359,6 +359,8 @@
 
             .map-container {
                 min-height: 300px;
+                height: 40vh; /* Hauteur fixe sur mobile */
+                flex: 0 0 auto; /* Ne pas étirer */
             }
 
             .hints-section {
@@ -458,9 +460,9 @@
         <div class="modal-title help-title">📖 Comment jouer ?</div>
         <div class="modal-text">
             <p>Fausse Commune est un jeu gratuit qui va tester votre instinct géographique.</p>
-            <p>J'ai développé un algorithme à qui je peux donner un endroit précis de France et qui va génèrer des faux noms de communes en s'inspirant de ce qui est autour de lui.</p>
+            <p>J'ai développé un algorithme à qui je peux donner un endroit précis de France pour qu'il génère des faux noms de communes en s'inspirant de ce qui est autour de lui.</p>
             <p>Votre but est de deviner de quel endroit il s'agit en lisant les noms générés. Cliquez sur un des points rouges de la carte pour donner votre réponse.</p>
-            <p>Attention, ces points sont de plus en plus nombreux et resserrés.</p>
+            <p>Attention, au fil des manches ces points sont de plus en plus nombreux et resserrés.</p>
             <p>Bonne chance !</p>
         </div>
         <button class="modal-button" onclick="closeHelp()">Compris !</button>
