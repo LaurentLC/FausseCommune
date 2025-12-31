@@ -799,6 +799,10 @@
         // Enregistre la victoire
         roundHistory.push(true);
 
+        // Met à jour le score immédiatement
+        const score = roundHistory.filter(r => r).length;
+        updateCurrentScore(score);
+
         // Révèle la réponse immédiatement
         revealAnswer();
 
