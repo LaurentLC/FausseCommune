@@ -10,7 +10,7 @@ if os.path.exists(DEPLOY_FOLDER):
 os.makedirs(DEPLOY_FOLDER, exist_ok=True)
 
 necessary_files = ["main.py", "requirements.txt", "back/game.py", "back/markov/math_utils.py"]
-necessary_folders = ["back/data_interfaces", "templates"]
+necessary_folders = ["back/data_interfaces", "templates", "static"]
 
 for file in necessary_files:
     destination_path = os.path.join(DEPLOY_FOLDER, file)
